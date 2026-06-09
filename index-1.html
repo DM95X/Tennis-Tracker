@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎾 Tennis Player Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D1B2A; font-family: 'Trebuchet MS', Arial, sans-serif; color: #E8E0CC; }
+  input, textarea, button, select { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0D1B2A; }
+  ::-webkit-scrollbar-thumb { background: #2A4060; border-radius: 3px; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const PLAYERS = [
+  // ATP Top 200 (Stand: Juni 2026)
+  { id: "atp1_sinner", name: "Jannik Sinner", country: "🇮🇹", tour: "ATP", rank: 1 },
+  { id: "atp2_alcaraz", name: "Carlos Alcaraz", country: "🇪🇸", tour: "ATP", rank: 2 },
+  { id: "atp3_zverev", name: "Alexander Zverev", country: "🇩🇪", tour: "ATP", rank: 3 },
+  { id: "atp4_faa", name: "Félix Auger-Aliassime", country: "🇨🇦", tour: "ATP", rank: 4 },
+  { id: "atp5_shelton", name: "Ben Shelton", country: "🇺🇸", tour: "ATP", rank: 5 },
+  { id: "atp6_deminaur", name: "Alex De Minaur", country: "🇦🇺", tour: "ATP", rank: 6 },
+  { id: "atp7_djokovic", name: "Novak Djokovic", country: "🇷🇸", tour: "ATP", rank: 7 },
+  { id: "atp8_medvedev", name: "Daniil Medvedev", country: "🇷🇺", tour: "ATP", rank: 8 },
+  { id: "atp9_fritz", name: "Taylor Fritz", country: "🇺🇸", tour: "ATP", rank: 9 },
+  { id: "atp10_cobolli", name: "Flavio Cobolli", country: "🇮🇹", tour: "ATP", rank: 10 },
+  { id: "atp11_bublik", name: "Alexander Bublik", country: "🇰🇿", tour: "ATP", rank: 11 },
+  { id: "atp12_lehecka", name: "Jiří Lehečka", country: "🇨🇿", tour: "ATP", rank: 12 },
+  { id: "atp13_rublev", name: "Andrey Rublev", country: "🇷🇺", tour: "ATP", rank: 13 },
+  { id: "atp14_ruud", name: "Casper Ruud", country: "🇳🇴", tour: "ATP", rank: 14 },
+  { id: "atp15_khachanov", name: "Karen Khachanov", country: "🇷🇺", tour: "ATP", rank: 15 },
+  { id: "atp16_musetti", name: "Lorenzo Musetti", country: "🇮🇹", tour: "ATP", rank: 16 },
+  { id: "atp17_mensik", name: "Jakub Menšík", country: "🇨🇿", tour: "ATP", rank: 17 },
+  { id: "atp18_darderi", name: "Luciano Darderi", country: "🇮🇹", tour: "ATP", rank: 18 },
+  { id: "atp19_tien", name: "Learner Tien", country: "🇺🇸", tour: "ATP", rank: 19 },
+  { id: "atp20_vacherot", name: "Valentin Vacherot", country: "🇲🇨", tour: "ATP", rank: 20 },
+  { id: "atp21_fils", name: "Arthur Fils", country: "🇫🇷", tour: "ATP", rank: 21 },
+  { id: "atp22_davidovich", name: "Alejandro Davidovich Fokina", country: "🇪🇸", tour: "ATP", rank: 22 },
+  { id: "atp23_jodar", name: "Rafael Jodar", country: "🇪🇸", tour: "ATP", rank: 23 },
+  { id: "atp24_rinderknech", name: "Arthur Rinderknech", country: "🇫🇷", tour: "ATP", rank: 24 },
+  { id: "atp25_fonseca", name: "João Fonseca", country: "🇧🇷", tour: "ATP", rank: 25 },
+  { id: "atp26_tiafoe", name: "Frances Tiafoe", country: "🇺🇸", tour: "ATP", rank: 26 },
+  { id: "atp27_fcerundolo", name: "Francisco Cerundolo", country: "🇦🇷", tour: "ATP", rank: 27 },
+  { id: "atp28_paul", name: "Tommy Paul", country: "🇺🇸", tour: "ATP", rank: 28 },
+  { id: "atp29_norrie", name: "Cameron Norrie", country: "🇬🇧", tour: "ATP", rank: 29 },
+  { id: "atp30_etcheverry", name: "Tomás Martín Etcheverry", country: "🇦🇷", tour: "ATP", rank: 30 },
+  { id: "atp31_tabilo", name: "Alejandro Tabilo", country: "🇨🇱", tour: "ATP", rank: 31 },
+  { id: "atp32_nakashima", name: "Brandon Nakashima", country: "🇺🇸", tour: "ATP", rank: 32 },
+  { id: "atp33_humbert", name: "Ugo Humbert", country: "🇫🇷", tour: "ATP", rank: 33 },
+  { id: "atp34_arnaldi", name: "Matteo Arnaldi", country: "🇮🇹", tour: "ATP", rank: 34 },
+  { id: "atp35_buse", name: "Ignacio Buse", country: "🇵🇪", tour: "ATP", rank: 35 },
+  { id: "atp36_moutet", name: "Corentin Moutet", country: "🇫🇷", tour: "ATP", rank: 36 },
+  { id: "atp37_blockx", name: "Alexander Blockx", country: "🇧🇪", tour: "ATP", rank: 37 },
+  { id: "atp38_michelsen", name: "Alex Michelsen", country: "🇺🇸", tour: "ATP", rank: 38 },
+  { id: "atp39_navone", name: "Mariano Navone", country: "🇦🇷", tour: "ATP", rank: 39 },
+  { id: "atp40_bergs", name: "Zizou Bergs", country: "🇧🇪", tour: "ATP", rank: 40 },
+  { id: "atp41_griekspoor", name: "Tallon Griekspoor", country: "🇳🇱", tour: "ATP", rank: 41 },
+  { id: "atp42_shapovalov", name: "Denis Shapovalov", country: "🇨🇦", tour: "ATP", rank: 42 },
+  { id: "atp43_machac", name: "Tomáš Macháč", country: "🇨🇿", tour: "ATP", rank: 43 },
+  { id: "atp44_munar", name: "Jaume Munar", country: "🇪🇸", tour: "ATP", rank: 44 },
+  { id: "atp45_mcerundolo", name: "Juan Manuel Cerúndolo", country: "🇦🇷", tour: "ATP", rank: 45 },
+  { id: "atp46_mannarino", name: "Adrian Mannarino", country: "🇫🇷", tour: "ATP", rank: 46 },
+  { id: "atp47_cilic", name: "Marin Čilić", country: "🇭🇷", tour: "ATP", rank: 47 },
+  { id: "atp48_berrettini", name: "Matteo Berrettini", country: "🇮🇹", tour: "ATP", rank: 48 },
+  { id: "atp49_kecmanovic", name: "Miomir Kecmanović", country: "🇷🇸", tour: "ATP", rank: 49 },
+  { id: "atp50_borges", name: "Nuno Borges", country: "🇵🇹", tour: "ATP", rank: 50 },
+  { id: "atp51_borges2", name: "Nuno Borges", country: "🇵🇹", tour: "ATP", rank: 51 },
+  { id: "atp51_atmane", name: "Terence Atmane", country: "🇫🇷", tour: "ATP", rank: 51 },
+  { id: "atp52_hanfmann", name: "Yannick Hanfmann", country: "🇩🇪", tour: "ATP", rank: 52 },
+  { id: "atp53_marozsan", name: "Fabián Marozsán", country: "🇭🇺", tour: "ATP", rank: 53 },
+  { id: "atp54_vanderzandschulp", name: "Botic van de Zandschulp", country: "🇳🇱", tour: "ATP", rank: 54 },
+  { id: "atp57_altmaier", name: "Daniel Altmaier", country: "🇩🇪", tour: "ATP", rank: 57 },
+  { id: "atp58_medjedovic", name: "Hamad Medjedovic", country: "🇷🇸", tour: "ATP", rank: 58 },
+  { id: "atp59_carabelli", name: "Camilo Ugo Carabelli", country: "🇦🇷", tour: "ATP", rank: 59 },
+  { id: "atp60_tirante", name: "Thiago Agustín Tirante", country: "🇦🇷", tour: "ATP", rank: 60 },
+  { id: "atp61_popyrin", name: "Alexei Popyrin", country: "🇦🇺", tour: "ATP", rank: 61 },
+  { id: "atp62_collignon", name: "Raphaël Collignon", country: "🇧🇪", tour: "ATP", rank: 62 },
+  { id: "atp63_brooksby", name: "Jenson Brooksby", country: "🇺🇸", tour: "ATP", rank: 63 },
+  { id: "atp64_baez", name: "Sebastián Báez", country: "🇦🇷", tour: "ATP", rank: 64 },
+  { id: "atp65_fucsovics", name: "Márton Fucsovics", country: "🇭🇺", tour: "ATP", rank: 65 },
+  { id: "atp66_kopriva", name: "Vít Kopřiva", country: "🇨🇿", tour: "ATP", rank: 66 },
+  { id: "atp67_kovacevic", name: "Aleksandar Kovacevic", country: "🇺🇸", tour: "ATP", rank: 67 },
+  { id: "atp68_burruchaga", name: "Román Andrés Burruchaga", country: "🇦🇷", tour: "ATP", rank: 68 },
+  { id: "atp69_landaluce", name: "Martín Landaluce", country: "🇪🇸", tour: "ATP", rank: 69 },
+  { id: "atp70_sonego", name: "Lorenzo Sonego", country: "🇮🇹", tour: "ATP", rank: 70 },
+  { id: "atp71_vallejo", name: "Adolfo Daniel Vallejo", country: "🇵🇾", tour: "ATP", rank: 71 },
+  { id: "atp72_prizmic", name: "Dino Prižmić", country: "🇭🇷", tour: "ATP", rank: 72 },
+  { id: "atp73_bellucci", name: "Mattia Bellucci", country: "🇮🇹", tour: "ATP", rank: 73 },
+  { id: "atp74_royer", name: "Valentin Royer", country: "🇫🇷", tour: "ATP", rank: 74 },
+  { id: "atp75_draper", name: "Jack Draper", country: "🇬🇧", tour: "ATP", rank: 75 },
+  { id: "atp76_opelka", name: "Reilly Opelka", country: "🇺🇸", tour: "ATP", rank: 76 },
+  { id: "atp77_cazaux", name: "Arthur Cazaux", country: "🇫🇷", tour: "ATP", rank: 77 },
+  { id: "atp78_majchrzak", name: "Kamil Majchrzak", country: "🇵🇱", tour: "ATP", rank: 78 },
+  { id: "atp79_tsitsipas", name: "Stefanos Tsitsipas", country: "🇬🇷", tour: "ATP", rank: 79 },
+  { id: "atp80_struff", name: "Jan-Lennard Struff", country: "🇩🇪", tour: "ATP", rank: 80 },
+  { id: "atp81_trungelliti", name: "Marco Trungelliti", country: "🇦🇷", tour: "ATP", rank: 81 },
+  { id: "atp82_duckworth", name: "James Duckworth", country: "🇦🇺", tour: "ATP", rank: 82 },
+  { id: "atp83_mpetshi", name: "Giovanni Mpetshi Perricard", country: "🇫🇷", tour: "ATP", rank: 83 },
+  { id: "atp84_giron", name: "Marcos Giron", country: "🇺🇸", tour: "ATP", rank: 84 },
+  { id: "atp85_svajda", name: "Zachary Svajda", country: "🇺🇸", tour: "ATP", rank: 85 },
+  { id: "atp86_merida", name: "Daniel Merida Aguilar", country: "🇪🇸", tour: "ATP", rank: 86 },
+  { id: "atp87_dzumhur", name: "Damir Džumhur", country: "🇧🇦", tour: "ATP", rank: 87 },
+  { id: "atp88_shevchenko", name: "Alexander Shevchenko", country: "🇰🇿", tour: "ATP", rank: 88 },
+  { id: "atp89_carrenobusta", name: "Pablo Carreño Busta", country: "🇪🇸", tour: "ATP", rank: 89 },
+  { id: "atp90_halys", name: "Quentin Halys", country: "🇫🇷", tour: "ATP", rank: 90 },
+  { id: "atp91_spizzirri", name: "Eliot Spizzirri", country: "🇺🇸", tour: "ATP", rank: 91 },
+  { id: "atp92_wu", name: "Wu Yibing", country: "🇨🇳", tour: "ATP", rank: 92 },
+  { id: "atp93_kypson", name: "Patrick Kypson", country: "🇺🇸", tour: "ATP", rank: 93 },
+  { id: "atp94_nava", name: "Emilio Nava", country: "🇺🇸", tour: "ATP", rank: 94 },
+  { id: "atp95_bonzi", name: "Benjamin Bonzi", country: "🇫🇷", tour: "ATP", rank: 95 },
+  { id: "atp96_vukic", name: "Aleksandar Vukic", country: "🇦🇺", tour: "ATP", rank: 96 },
+  { id: "atp97_walton", name: "Adam Walton", country: "🇦🇺", tour: "ATP", rank: 97 },
+  { id: "atp98_hijikata", name: "Rinky Hijikata", country: "🇦🇺", tour: "ATP", rank: 98 },
+  { id: "atp99_hurkacz", name: "Hubert Hurkacz", country: "🇵🇱", tour: "ATP", rank: 99 },
+  { id: "atp100_vanassche", name: "Luca Van Assche", country: "🇫🇷", tour: "ATP", rank: 100 },
+  { id: "atp101_choinski", name: "Jan Choinski", country: "🇬🇧", tour: "ATP", rank: 101 },
+  { id: "atp102_comesana", name: "Francisco Comesaña", country: "🇦🇷", tour: "ATP", rank: 102 },
+  { id: "atp103_shimabukuro", name: "Sho Shimabukuro", country: "🇯🇵", tour: "ATP", rank: 103 },
+  { id: "atp104_arnaldi2", name: "Matteo Arnaldi", country: "🇮🇹", tour: "ATP", rank: 104 },
+  { id: "atp105_berrettini2", name: "Matteo Berrettini", country: "🇮🇹", tour: "ATP", rank: 105 },
+  { id: "atp106_dejong", name: "Jesper de Jong", country: "🇳🇱", tour: "ATP", rank: 106 },
+  { id: "atp107_droguet", name: "Titouan Droguet", country: "🇫🇷", tour: "ATP", rank: 107 },
+  { id: "atp108_svrcina", name: "Dalibor Svrčina", country: "🇨🇿", tour: "ATP", rank: 108 },
+  { id: "atp109_wong", name: "Coleman Wong", country: "🇭🇰", tour: "ATP", rank: 109 },
+  { id: "atp110_molcan", name: "Alex Molčan", country: "🇸🇰", tour: "ATP", rank: 110 },
+  { id: "atp111_basilashvili", name: "Nikoloz Basilashvili", country: "🇬🇪", tour: "ATP", rank: 111 },
+  { id: "atp112_ofner", name: "Sebastian Ofner", country: "🇦🇹", tour: "ATP", rank: 112 },
+  { id: "atp113_wawrinka", name: "Stan Wawrinka", country: "🇨🇭", tour: "ATP", rank: 113 },
+  { id: "atp114_garin", name: "Cristian Garín", country: "🇨🇱", tour: "ATP", rank: 114 },
+  { id: "atp115_faria", name: "Jaime Faria", country: "🇵🇹", tour: "ATP", rank: 115 },
+  { id: "atp116_damm", name: "Martin Damm", country: "🇺🇸", tour: "ATP", rank: 116 },
+  { id: "atp117_bautista", name: "Roberto Bautista Agut", country: "🇪🇸", tour: "ATP", rank: 117 },
+  { id: "atp118_gaston", name: "Hugo Gaston", country: "🇫🇷", tour: "ATP", rank: 118 },
+  { id: "atp119_rocha", name: "Henrique Rocha", country: "🇵🇹", tour: "ATP", rank: 119 },
+  { id: "atp120_riedi", name: "Leandro Riedi", country: "🇨🇭", tour: "ATP", rank: 120 },
+  { id: "atp121_budkov", name: "Nicolai Budkov Kjær", country: "🇳🇴", tour: "ATP", rank: 121 },
+  { id: "atp122_llamas", name: "Pablo Llamas Ruiz", country: "🇪🇸", tour: "ATP", rank: 122 },
+  { id: "atp123_schoolkate", name: "Tristan Schoolkate", country: "🇦🇺", tour: "ATP", rank: 123 },
+  { id: "atp124_pellegrino", name: "Andrea Pellegrino", country: "🇮🇹", tour: "ATP", rank: 124 },
+  { id: "atp125_fearnley", name: "Jacob Fearnley", country: "🇬🇧", tour: "ATP", rank: 125 },
+  { id: "atp126_mcdonald", name: "Mackenzie McDonald", country: "🇺🇸", tour: "ATP", rank: 126 },
+  { id: "atp127_muller", name: "Alexandre Müller", country: "🇫🇷", tour: "ATP", rank: 127 },
+  { id: "atp128_maestrelli", name: "Francesco Maestrelli", country: "🇮🇹", tour: "ATP", rank: 128 },
+  { id: "atp129_misolic", name: "Filip Misolic", country: "🇦🇹", tour: "ATP", rank: 129 },
+  { id: "atp130_mochizuki", name: "Shintaro Mochizuki", country: "🇯🇵", tour: "ATP", rank: 130 },
+  { id: "atp131_sweeny", name: "Dane Sweeny", country: "🇦🇺", tour: "ATP", rank: 131 },
+  { id: "atp132_pinnington", name: "Jack Pinnington Jones", country: "🇬🇧", tour: "ATP", rank: 132 },
+  { id: "atp133_gaubas", name: "Vilius Gaubas", country: "🇱🇹", tour: "ATP", rank: 133 },
+  { id: "atp134_virtanen", name: "Otto Virtanen", country: "🇫🇮", tour: "ATP", rank: 134 },
+  { id: "atp135_gea", name: "Arthur Gea", country: "🇫🇷", tour: "ATP", rank: 135 },
+  { id: "atp136_barrios", name: "Marcelo Tomás Barrios Vera", country: "🇨🇱", tour: "ATP", rank: 136 },
+  { id: "atp137_lajovic", name: "Dušan Lajović", country: "🇷🇸", tour: "ATP", rank: 137 },
+  { id: "atp138_travaglia", name: "Stefano Travaglia", country: "🇮🇹", tour: "ATP", rank: 138 },
+  { id: "atp139_echargui", name: "Moez Echargui", country: "🇹🇳", tour: "ATP", rank: 139 },
+  { id: "atp140_martinez", name: "Pedro Martínez", country: "🇪🇸", tour: "ATP", rank: 140 },
+  { id: "atp141_safiullin", name: "Roman Safiullin", country: "🇷🇺", tour: "ATP", rank: 141 },
+  { id: "atp142_moller", name: "Elmer Møller", country: "🇩🇰", tour: "ATP", rank: 142 },
+  { id: "atp143_harris", name: "Lloyd Harris", country: "🇿🇦", tour: "ATP", rank: 143 },
+  { id: "atp144_dellien", name: "Hugo Dellien", country: "🇧🇴", tour: "ATP", rank: 144 },
+  { id: "atp145_taberner", name: "Carlos Taberner", country: "🇪🇸", tour: "ATP", rank: 145 },
+  { id: "atp146_zheng", name: "Michael Zheng", country: "🇺🇸", tour: "ATP", rank: 146 },
+  { id: "atp147_jacquet", name: "Kyrian Jacquet", country: "🇫🇷", tour: "ATP", rank: 147 },
+  { id: "atp148_basavareddy", name: "Nishesh Basavareddy", country: "🇺🇸", tour: "ATP", rank: 148 },
+  { id: "atp149_thompson", name: "Jordan Thompson", country: "🇦🇺", tour: "ATP", rank: 149 },
+  { id: "atp150_bharris", name: "Billy Harris", country: "🇬🇧", tour: "ATP", rank: 150 },
+  { id: "atp151_diaz", name: "Facundo Díaz Acosta", country: "🇦🇷", tour: "ATP", rank: 151 },
+  { id: "atp152_bolt", name: "Alex Bolt", country: "🇦🇺", tour: "ATP", rank: 152 },
+  { id: "atp153_sakamoto", name: "Rei Sakamoto", country: "🇯🇵", tour: "ATP", rank: 153 },
+  { id: "atp154_fery", name: "Arthur Fery", country: "🇬🇧", tour: "ATP", rank: 154 },
+  { id: "atp155_oconnell", name: "Christopher O'Connell", country: "🇦🇺", tour: "ATP", rank: 155 },
+  { id: "atp156_holmgren", name: "August Holmgren", country: "🇩🇰", tour: "ATP", rank: 156 },
+  { id: "atp157_lajal", name: "Mark Lajal", country: "🇪🇪", tour: "ATP", rank: 157 },
+  { id: "atp158_rodionov", name: "Jurij Rodionov", country: "🇦🇹", tour: "ATP", rank: 158 },
+  { id: "atp159_samuel", name: "Toby Samuel", country: "🇬🇧", tour: "ATP", rank: 159 },
+  { id: "atp160_blanchet", name: "Ugo Blanchet", country: "🇫🇷", tour: "ATP", rank: 160 },
+  { id: "atp161_passaro", name: "Francesco Passaro", country: "🇮🇹", tour: "ATP", rank: 161 },
+  { id: "atp162_kolar", name: "Zdeněk Kolář", country: "🇨🇿", tour: "ATP", rank: 162 },
+  { id: "atp163_nardi", name: "Luca Nardi", country: "🇮🇹", tour: "ATP", rank: 163 },
+  { id: "atp164_draxl", name: "Liam Draxl", country: "🇨🇦", tour: "ATP", rank: 164 },
+  { id: "atp165_rodesch", name: "Chris Rodesch", country: "🇱🇺", tour: "ATP", rank: 165 },
+  { id: "atp166_yunchaokete", name: "Bu Yunchaokete", country: "🇨🇳", tour: "ATP", rank: 166 },
+  { id: "atp167_klein", name: "Lukáš Klein", country: "🇸🇰", tour: "ATP", rank: 167 },
+  { id: "atp168_dimitrov", name: "Grigor Dimitrov", country: "🇧🇬", tour: "ATP", rank: 168 },
+  { id: "atp169_mejia", name: "Nicolás Mejía", country: "🇨🇴", tour: "ATP", rank: 169 },
+  { id: "atp170_schwaerzler", name: "Joel Schwärzler", country: "🇦🇹", tour: "ATP", rank: 170 },
+  { id: "atp171_tabur", name: "Clément Tabur", country: "🇫🇷", tour: "ATP", rank: 171 },
+  { id: "atp172_zeppieri", name: "Giulio Zeppieri", country: "🇮🇹", tour: "ATP", rank: 172 },
+  { id: "atp173_piros", name: "Zsombor Piros", country: "🇭🇺", tour: "ATP", rank: 173 },
+  { id: "atp174_nishioka", name: "Yoshihito Nishioka", country: "🇯🇵", tour: "ATP", rank: 174 },
+  { id: "atp175_glinka", name: "Daniil Glinka", country: "🇪🇪", tour: "ATP", rank: 175 },
+  { id: "atp176_prado", name: "Juan Carlos Prado Angelo", country: "🇧🇴", tour: "ATP", rank: 176 },
+  { id: "atp177_chidekh", name: "Clément Chidekh", country: "🇫🇷", tour: "ATP", rank: 177 },
+  { id: "atp178_cecchinato", name: "Marco Cecchinato", country: "🇮🇹", tour: "ATP", rank: 178 },
+  { id: "atp179_gomez", name: "Federico Agustín Gómez", country: "🇦🇷", tour: "ATP", rank: 179 },
+  { id: "atp180_jarry", name: "Nicolás Jarry", country: "🇨🇱", tour: "ATP", rank: 180 },
+  { id: "atp181_tseng", name: "Chun-hsin Tseng", country: "🇹🇼", tour: "ATP", rank: 181 },
+  { id: "atp182_onclin", name: "Gauthier Onclin", country: "🇧🇪", tour: "ATP", rank: 182 },
+  { id: "atp183_bueno", name: "Gonzalo Bueno", country: "🇵🇪", tour: "ATP", rank: 183 },
+  { id: "atp184_gojo", name: "Borna Gojo", country: "🇭🇷", tour: "ATP", rank: 184 },
+  { id: "atp185_smith", name: "Colton Smith", country: "🇺🇸", tour: "ATP", rank: 185 },
+  { id: "atp186_heide", name: "Gustavo Heide", country: "🇧🇷", tour: "ATP", rank: 186 },
+  { id: "atp187_neumayer", name: "Lukas Neumayer", country: "🇦🇹", tour: "ATP", rank: 187 },
+  { id: "atp188_kwon", name: "Soon-woo Kwon", country: "🇰🇷", tour: "ATP", rank: 188 },
+  { id: "atp189_skatov", name: "Timofey Skatov", country: "🇰🇿", tour: "ATP", rank: 189 },
+  { id: "atp190_barrena", name: "Alex Barrena", country: "🇦🇷", tour: "ATP", rank: 190 },
+  { id: "atp191_ymer", name: "Elias Ymer", country: "🇸🇪", tour: "ATP", rank: 191 },
+  { id: "atp192_kym", name: "Jérôme Kym", country: "🇨🇭", tour: "ATP", rank: 192 },
+  { id: "atp193_galarneau", name: "Alexis Galarneau", country: "🇨🇦", tour: "ATP", rank: 193 },
+  { id: "atp194_tomic", name: "Bernard Tomic", country: "🇦🇺", tour: "ATP", rank: 194 },
+  { id: "atp195_mikrut", name: "Luka Mikrut", country: "🇭🇷", tour: "ATP", rank: 195 },
+  { id: "atp196_cadenasso", name: "Gianluca Cadenasso", country: "🇮🇹", tour: "ATP", rank: 196 },
+  { id: "atp197_sakellaridis", name: "Stefanos Sakellaridis", country: "🇬🇷", tour: "ATP", rank: 197 },
+  { id: "atp198_reis", name: "João Lucas Reis da Silva", country: "🇧🇷", tour: "ATP", rank: 198 },
+  { id: "atp199_boyer", name: "Tristan Boyer", country: "🇺🇸", tour: "ATP", rank: 199 },
+  { id: "atp200_ficovich", name: "Juan Pablo Ficovich", country: "🇦🇷", tour: "ATP", rank: 200 },
+
+  // WTA Top 200 (Stand: Juni 2026)
+  { id: "wta1_sabalenka", name: "Aryna Sabalenka", country: "🇧🇾", tour: "WTA", rank: 1 },
+  { id: "wta2_rybakina", name: "Elena Rybakina", country: "🇰🇿", tour: "WTA", rank: 2 },
+  { id: "wta3_swiatek", name: "Iga Świątek", country: "🇵🇱", tour: "WTA", rank: 3 },
+  { id: "wta4_pegula", name: "Jessica Pegula", country: "🇺🇸", tour: "WTA", rank: 4 },
+  { id: "wta5_anisimova", name: "Amanda Anisimova", country: "🇺🇸", tour: "WTA", rank: 5 },
+  { id: "wta6_andreeva", name: "Mirra Andreeva", country: "🇷🇺", tour: "WTA", rank: 6 },
+  { id: "wta7_gauff", name: "Coco Gauff", country: "🇺🇸", tour: "WTA", rank: 7 },
+  { id: "wta8_svitolina", name: "Elina Svitolina", country: "🇺🇦", tour: "WTA", rank: 8 },
+  { id: "wta9_mboko", name: "Victoria Mboko", country: "🇨🇦", tour: "WTA", rank: 9 },
+  { id: "wta10_muchova", name: "Karolína Muchová", country: "🇨🇿", tour: "WTA", rank: 10 },
+  { id: "wta11_bencic", name: "Belinda Bencic", country: "🇨🇭", tour: "WTA", rank: 11 },
+  { id: "wta12_kostyuk", name: "Marta Kostyuk", country: "🇺🇦", tour: "WTA", rank: 12 },
+  { id: "wta13_noskova", name: "Linda Nošková", country: "🇨🇿", tour: "WTA", rank: 13 },
+  { id: "wta14_paolini", name: "Jasmine Paolini", country: "🇮🇹", tour: "WTA", rank: 14 },
+  { id: "wta15_osaka", name: "Naomi Osaka", country: "🇯🇵", tour: "WTA", rank: 15 },
+  { id: "wta16_shnaider", name: "Diana Shnaider", country: "🇷🇺", tour: "WTA", rank: 16 },
+  { id: "wta17_alexandrova", name: "Ekaterina Alexandrova", country: "🇷🇺", tour: "WTA", rank: 17 },
+  { id: "wta18_cirstea", name: "Sorana Cîrstea", country: "🇷🇴", tour: "WTA", rank: 18 },
+  { id: "wta19_jovic", name: "Iva Jović", country: "🇺🇸", tour: "WTA", rank: 19 },
+  { id: "wta20_kalinskaya", name: "Anna Kalinskaya", country: "🇷🇺", tour: "WTA", rank: 20 },
+  { id: "wta21_chwalinska", name: "Maja Chwalinska", country: "🇵🇱", tour: "WTA", rank: 21 },
+  { id: "wta22_mertens", name: "Elise Mertens", country: "🇧🇪", tour: "WTA", rank: 22 },
+  { id: "wta23_fernandez", name: "Leylah Fernandez", country: "🇨🇦", tour: "WTA", rank: 23 },
+  { id: "wta24_tauson", name: "Clara Tauson", country: "🇩🇰", tour: "WTA", rank: 24 },
+  { id: "wta25_navarro", name: "Emma Navarro", country: "🇺🇸", tour: "WTA", rank: 25 },
+  { id: "wta26_keys", name: "Madison Keys", country: "🇺🇸", tour: "WTA", rank: 26 },
+  { id: "wta27_potapova", name: "Anastasia Potapova", country: "🇷🇺", tour: "WTA", rank: 27 },
+  { id: "wta28_bouzkova", name: "Marie Bouzková", country: "🇨🇿", tour: "WTA", rank: 28 },
+  { id: "wta29_li", name: "Ann Li", country: "🇺🇸", tour: "WTA", rank: 29 },
+  { id: "wta30_baptiste", name: "Hailey Baptiste", country: "🇺🇸", tour: "WTA", rank: 30 },
+  { id: "wta31_wang", name: "Wang Xinyu", country: "🇨🇳", tour: "WTA", rank: 31 },
+  { id: "wta32_siniakova", name: "Kateřina Siniaková", country: "🇨🇿", tour: "WTA", rank: 32 },
+  { id: "wta33_eala", name: "Alexandra Eala", country: "🇵🇭", tour: "WTA", rank: 33 },
+  { id: "wta34_bucsa", name: "Cristina Bucșa", country: "🇪🇸", tour: "WTA", rank: 34 },
+  { id: "wta35_samsonova", name: "Liudmila Samsonova", country: "🇷🇺", tour: "WTA", rank: 35 },
+  { id: "wta36_ostapenko", name: "Jeļena Ostapenko", country: "🇱🇻", tour: "WTA", rank: 36 },
+  { id: "wta37_sakkari", name: "Maria Sakkari", country: "🇬🇷", tour: "WTA", rank: 37 },
+  { id: "wta38_cristian", name: "Jaqueline Cristian", country: "🇷🇴", tour: "WTA", rank: 38 },
+  { id: "wta39_kessler", name: "McCartney Kessler", country: "🇺🇸", tour: "WTA", rank: 39 },
+  { id: "wta40_tjen", name: "Janice Tjen", country: "🇮🇩", tour: "WTA", rank: 40 },
+  { id: "wta41_cocciaretto", name: "Elisabetta Cocciaretto", country: "🇮🇹", tour: "WTA", rank: 41 },
+  { id: "wta42_raducanu", name: "Emma Raducanu", country: "🇬🇧", tour: "WTA", rank: 42 },
+  { id: "wta43_frech", name: "Magdalena Fręch", country: "🇵🇱", tour: "WTA", rank: 43 },
+  { id: "wta44_siegemund", name: "Laura Siegemund", country: "🇩🇪", tour: "WTA", rank: 44 },
+  { id: "wta45_krejcikova", name: "Barbora Krejčíková", country: "🇨🇿", tour: "WTA", rank: 45 },
+  { id: "wta46_bejlek", name: "Sára Bejlek", country: "🇨🇿", tour: "WTA", rank: 46 },
+  { id: "wta47_valentova", name: "Tereza Valentová", country: "🇨🇿", tour: "WTA", rank: 47 },
+  { id: "wta48_vondrousova", name: "Markéta Vondroušová", country: "🇨🇿", tour: "WTA", rank: 48 },
+  { id: "wta49_yastremska", name: "Dayana Yastremska", country: "🇺🇦", tour: "WTA", rank: 49 },
+  { id: "wta50_marcinko", name: "Petra Marcinko", country: "🇭🇷", tour: "WTA", rank: 50 },
+  { id: "wta51_joint", name: "Maya Joint", country: "🇦🇺", tour: "WTA", rank: 51 },
+  { id: "wta52_kasatkina", name: "Darya Kasatkina", country: "🇦🇺", tour: "WTA", rank: 52 },
+  { id: "wta53_maria", name: "Tatjana Maria", country: "🇩🇪", tour: "WTA", rank: 53 },
+  { id: "wta54_starodubtseva", name: "Yulia Starodubtseva", country: "🇺🇦", tour: "WTA", rank: 54 },
+  { id: "wta55_zheng", name: "Zheng Qinwen", country: "🇨🇳", tour: "WTA", rank: 55 },
+  { id: "wta56_bondar", name: "Anna Bondár", country: "🇭🇺", tour: "WTA", rank: 56 },
+  { id: "wta57_gibson", name: "Talia Gibson", country: "🇦🇺", tour: "WTA", rank: 57 },
+  { id: "wta58_udvardy", name: "Panna Udvardy", country: "🇭🇺", tour: "WTA", rank: 58 },
+  { id: "wta59_kalinina", name: "Anhelina Kalinina", country: "🇺🇦", tour: "WTA", rank: 59 },
+  { id: "wta60_zhang", name: "Zhang Shuai", country: "🇨🇳", tour: "WTA", rank: 60 },
+  { id: "wta61_kartal", name: "Sonay Kartal", country: "🇬🇧", tour: "WTA", rank: 61 },
+  { id: "wta62_mcnally", name: "Caty McNally", country: "🇺🇸", tour: "WTA", rank: 62 },
+  { id: "wta63_ruzic", name: "Antonia Ružić", country: "🇭🇷", tour: "WTA", rank: 63 },
+  { id: "wta64_oliynykova", name: "Oleksandra Oliynykova", country: "🇺🇦", tour: "WTA", rank: 64 },
+  { id: "wta65_sonmez", name: "Zeynep Sönmez", country: "🇹🇷", tour: "WTA", rank: 65 },
+  { id: "wta66_jacquemot", name: "Elsa Jacquemot", country: "🇫🇷", tour: "WTA", rank: 66 },
+  { id: "wta67_sierra", name: "Solana Sierra", country: "🇦🇷", tour: "WTA", rank: 67 },
+  { id: "wta68_bartunkova", name: "Nikola Bartůňková", country: "🇨🇿", tour: "WTA", rank: 68 },
+  { id: "wta69_gracheva", name: "Varvara Gracheva", country: "🇫🇷", tour: "WTA", rank: 69 },
+  { id: "wta70_boulter", name: "Katie Boulter", country: "🇬🇧", tour: "WTA", rank: 70 },
+  { id: "wta71_vekic", name: "Donna Vekić", country: "🇭🇷", tour: "WTA", rank: 71 },
+  { id: "wta72_linette", name: "Magda Linette", country: "🇵🇱", tour: "WTA", rank: 72 },
+  { id: "wta73_zarazua", name: "Renata Zarazúa", country: "🇲🇽", tour: "WTA", rank: 73 },
+  { id: "wta74_townsend", name: "Taylor Townsend", country: "🇺🇸", tour: "WTA", rank: 74 },
+  { id: "wta75_putintseva", name: "Yulia Putintseva", country: "🇰🇿", tour: "WTA", rank: 75 },
+  { id: "wta76_ruse", name: "Elena-Gabriela Ruse", country: "🇷🇴", tour: "WTA", rank: 76 },
+  { id: "wta77_stearns", name: "Peyton Stearns", country: "🇺🇸", tour: "WTA", rank: 77 },
+  { id: "wta78_parks", name: "Alycia Parks", country: "🇺🇸", tour: "WTA", rank: 78 },
+  { id: "wta79_zakharova", name: "Anastasia Zakharova", country: "🇷🇺", tour: "WTA", rank: 79 },
+  { id: "wta80_lys", name: "Eva Lys", country: "🇩🇪", tour: "WTA", rank: 80 },
+  { id: "wta81_golubic", name: "Viktorija Golubič", country: "🇨🇭", tour: "WTA", rank: 81 },
+  { id: "wta82_birrell", name: "Kimberly Birrell", country: "🇦🇺", tour: "WTA", rank: 82 },
+  { id: "wta83_erjavec", name: "Veronika Erjavec", country: "🇸🇮", tour: "WTA", rank: 83 },
+  { id: "wta84_kudermetova", name: "Veronika Kudermetova", country: "🇷🇺", tour: "WTA", rank: 84 },
+  { id: "wta85_osorio", name: "Camila Osorio", country: "🇨🇴", tour: "WTA", rank: 85 },
+  { id: "wta86_kenin", name: "Sofia Kenin", country: "🇺🇸", tour: "WTA", rank: 86 },
+  { id: "wta87_selekhmeteva", name: "Oksana Selekhmeteva", country: "🇷🇺", tour: "WTA", rank: 87 },
+  { id: "wta88_rakhimova", name: "Kamilla Rakhimova", country: "🇺🇿", tour: "WTA", rank: 88 },
+  { id: "wta89_tagger", name: "Lilli Tagger", country: "🇦🇹", tour: "WTA", rank: 89 },
+  { id: "wta90_waltert", name: "Simona Waltert", country: "🇨🇭", tour: "WTA", rank: 90 },
+  { id: "wta91_parry", name: "Diane Parry", country: "🇫🇷", tour: "WTA", rank: 91 },
+  { id: "wta92_snigur", name: "Daria Snigur", country: "🇺🇦", tour: "WTA", rank: 92 },
+  { id: "wta93_arango", name: "Emiliana Arango", country: "🇨🇴", tour: "WTA", rank: 93 },
+  { id: "wta94_korpatsch", name: "Tamara Korpatsch", country: "🇩🇪", tour: "WTA", rank: 94 },
+  { id: "wta95_seidel", name: "Ella Seidel", country: "🇩🇪", tour: "WTA", rank: 95 },
+  { id: "wta96_tararudee", name: "Lanlana Tararudee", country: "🇹🇭", tour: "WTA", rank: 96 },
+  { id: "wta97_kraus", name: "Sinja Kraus", country: "🇦🇹", tour: "WTA", rank: 97 },
+  { id: "wta98_vandewinkel", name: "Hanne Vandewinkel", country: "🇧🇪", tour: "WTA", rank: 98 },
+  { id: "wta99_tomljanovic", name: "Ajla Tomljanović", country: "🇦🇺", tour: "WTA", rank: 99 },
+  { id: "wta100_jonesfr", name: "Francesca Jones", country: "🇬🇧", tour: "WTA", rank: 100 },
+  { id: "wta101_badosa", name: "Paula Badosa", country: "🇪🇸", tour: "WTA", rank: 101 },
+  { id: "wta102_volynets", name: "Katie Volynets", country: "🇺🇸", tour: "WTA", rank: 102 },
+  { id: "wta103_krueger", name: "Ashlyn Krueger", country: "🇺🇸", tour: "WTA", rank: 103 },
+  { id: "wta104_vidmanova", name: "Darja Vidmanová", country: "🇨🇿", tour: "WTA", rank: 104 },
+  { id: "wta105_sun", name: "Lulu Sun", country: "🇳🇿", tour: "WTA", rank: 105 },
+  { id: "wta106_uchijima", name: "Moyuka Uchijima", country: "🇯🇵", tour: "WTA", rank: 106 },
+  { id: "wta107_pavlyuchenkova", name: "Anastasia Pavlyuchenkova", country: "🇷🇺", tour: "WTA", rank: 107 },
+  { id: "wta108_jimenez", name: "Victoria Jiménez Kasintseva", country: "🇦🇩", tour: "WTA", rank: 108 },
+  { id: "wta109_semenistaja", name: "Darja Semenistaja", country: "🇱🇻", tour: "WTA", rank: 109 },
+  { id: "wta110_sherif", name: "Mayar Sherif", country: "🇪🇬", tour: "WTA", rank: 110 },
+  { id: "wta111_yuan", name: "Yuan Yue", country: "🇨🇳", tour: "WTA", rank: 111 },
+  { id: "wta112_juvan", name: "Kaja Juvan", country: "🇸🇮", tour: "WTA", rank: 112 },
+  { id: "wta113_salkova", name: "Dominika Šalková", country: "🇨🇿", tour: "WTA", rank: 113 },
+  { id: "wta114_sramkova", name: "Rebecca Šrámková", country: "🇸🇰", tour: "WTA", rank: 114 },
+  { id: "wta115_galfi", name: "Dalma Gálfi", country: "🇭🇺", tour: "WTA", rank: 115 },
+  { id: "wta116_sasnovich", name: "Aliaksandra Sasnovich", country: "🇧🇾", tour: "WTA", rank: 116 },
+  { id: "wta117_grabher", name: "Julia Grabher", country: "🇦🇹", tour: "WTA", rank: 117 },
+  { id: "wta118_korneeva", name: "Alina Korneeva", country: "🇷🇺", tour: "WTA", rank: 118 },
+  { id: "wta119_pkudermetova", name: "Polina Kudermetova", country: "🇺🇿", tour: "WTA", rank: 119 },
+  { id: "wta120_lamens", name: "Suzan Lamens", country: "🇳🇱", tour: "WTA", rank: 120 },
+  { id: "wta121_charaeva", name: "Alina Charaeva", country: "🇷🇺", tour: "WTA", rank: 121 },
+  { id: "wta122_preston", name: "Taylah Preston", country: "🇦🇺", tour: "WTA", rank: 122 },
+  { id: "wta123_jeanjean", name: "Leolia Jeanjean", country: "🇫🇷", tour: "WTA", rank: 123 },
+  { id: "wta124_stakusic", name: "Marina Stakusic", country: "🇨🇦", tour: "WTA", rank: 124 },
+  { id: "wta125_jonesem", name: "Emerson Jones", country: "🇦🇺", tour: "WTA", rank: 125 },
+  { id: "wta126_pliskova", name: "Karolína Plíšková", country: "🇨🇿", tour: "WTA", rank: 126 },
+  { id: "wta127_sakatsume", name: "Himeno Sakatsume", country: "🇯🇵", tour: "WTA", rank: 127 },
+  { id: "wta128_zhu", name: "Zhu Lin", country: "🇨🇳", tour: "WTA", rank: 128 },
+  { id: "wta129_zidansek", name: "Tamara Zidanšek", country: "🇸🇮", tour: "WTA", rank: 129 },
+  { id: "wta130_collins", name: "Danielle Collins", country: "🇺🇸", tour: "WTA", rank: 130 },
+  { id: "wta131_hon", name: "Priscilla Hon", country: "🇦🇺", tour: "WTA", rank: 131 },
+  { id: "wta132_timofeeva", name: "Maria Timofeeva", country: "🇺🇿", tour: "WTA", rank: 132 },
+  { id: "wta133_andreescu", name: "Bianca Andreescu", country: "🇨🇦", tour: "WTA", rank: 133 },
+  { id: "wta134_kawa", name: "Katarzyna Kawa", country: "🇵🇱", tour: "WTA", rank: 134 },
+  { id: "wta135_quevedo", name: "Kaitlin Quevedo", country: "🇪🇸", tour: "WTA", rank: 135 },
+  { id: "wta136_kalieva", name: "Elvina Kalieva", country: "🇺🇸", tour: "WTA", rank: 136 },
+  { id: "wta137_pigato", name: "Lisa Pigato", country: "🇮🇹", tour: "WTA", rank: 137 },
+  { id: "wta138_wangxiyu", name: "Wang Xiyu", country: "🇨🇳", tour: "WTA", rank: 138 },
+  { id: "wta139_inglis", name: "Maddison Inglis", country: "🇦🇺", tour: "WTA", rank: 139 },
+  { id: "wta140_danilovic", name: "Olga Danilović", country: "🇷🇸", tour: "WTA", rank: 140 },
+  { id: "wta141_radivojevic", name: "Lola Radivojević", country: "🇷🇸", tour: "WTA", rank: 141 },
+  { id: "wta142_costoulas", name: "Sofia Costoulas", country: "🇧🇪", tour: "WTA", rank: 142 },
+  { id: "wta143_rus", name: "Arantxa Rus", country: "🇳🇱", tour: "WTA", rank: 143 },
+  { id: "wta144_day", name: "Kayla Day", country: "🇺🇸", tour: "WTA", rank: 144 },
+  { id: "wta145_stoiana", name: "Mary Stoiana", country: "🇺🇸", tour: "WTA", rank: 145 },
+  { id: "wta146_garland", name: "Joanna Garland", country: "🇹🇼", tour: "WTA", rank: 146 },
+  { id: "wta147_lazaro", name: "Andrea Lázaro García", country: "🇪🇸", tour: "WTA", rank: 147 },
+  { id: "wta148_podrez", name: "Veronika Podrez", country: "🇺🇦", tour: "WTA", rank: 148 },
+  { id: "wta149_dolehide", name: "Caroline Dolehide", country: "🇺🇸", tour: "WTA", rank: 149 },
+  { id: "wta150_stefanini", name: "Lucrezia Stefanini", country: "🇮🇹", tour: "WTA", rank: 150 },
+  { id: "wta151_fruhvirtova", name: "Linda Fruhvirtová", country: "🇨🇿", tour: "WTA", rank: 151 },
+  { id: "wta152_samson", name: "Laura Samson", country: "🇨🇿", tour: "WTA", rank: 152 },
+  { id: "wta153_klimovicova", name: "Linda Klimovičová", country: "🇵🇱", tour: "WTA", rank: 153 },
+  { id: "wta154_tomova", name: "Viktoriya Tomova", country: "🇧🇬", tour: "WTA", rank: 154 },
+  { id: "wta155_rakotomanga", name: "Tiantsoa Sarah Rakotomanga Rajaonah", country: "🇫🇷", tour: "WTA", rank: 155 },
+  { id: "wta156_masarova", name: "Rebeka Masarová", country: "🇨🇭", tour: "WTA", rank: 156 },
+  { id: "wta157_prozorova", name: "Tatiana Prozorova", country: "🇷🇺", tour: "WTA", rank: 157 },
+  { id: "wta158_lepchenko", name: "Varvara Lepchenko", country: "🇺🇸", tour: "WTA", rank: 158 },
+  { id: "wta159_koevermans", name: "Anouk Koevermans", country: "🇳🇱", tour: "WTA", rank: 159 },
+  { id: "wta160_romero", name: "Leyre Romero Gormaz", country: "🇪🇸", tour: "WTA", rank: 160 },
+  { id: "wta161_iatcenko", name: "Polina Iatcenko", country: "🇷🇺", tour: "WTA", rank: 161 },
+  { id: "wta162_nohaakugue", name: "Noma Noha Akugue", country: "🇩🇪", tour: "WTA", rank: 162 },
+  { id: "wta163_guo", name: "Guo Hanyu", country: "🇨🇳", tour: "WTA", rank: 163 },
+  { id: "wta164_mandlik", name: "Elizabeth Mandlik", country: "🇺🇸", tour: "WTA", rank: 164 },
+  { id: "wta165_ortenzi", name: "Jazmin Ortenzi", country: "🇦🇷", tour: "WTA", rank: 165 },
+  { id: "wta166_papamichail", name: "Despina Papamichail", country: "🇬🇷", tour: "WTA", rank: 166 },
+  { id: "wta167_brancaccio", name: "Nuria Brancaccio", country: "🇮🇹", tour: "WTA", rank: 167 },
+  { id: "wta168_minnen", name: "Greet Minnen", country: "🇧🇪", tour: "WTA", rank: 168 },
+  { id: "wta169_bronzetti", name: "Lucia Bronzetti", country: "🇮🇹", tour: "WTA", rank: 169 },
+  { id: "wta170_dart", name: "Harriet Dart", country: "🇬🇧", tour: "WTA", rank: 170 },
+  { id: "wta171_sawangkaew", name: "Mananchaya Sawangkaew", country: "🇹🇭", tour: "WTA", rank: 171 },
+  { id: "wta172_bassols", name: "Marina Bassols Ribera", country: "🇪🇸", tour: "WTA", rank: 172 },
+  { id: "wta173_lee", name: "Carol Young Suh Lee", country: "🇲🇵", tour: "WTA", rank: 173 },
+  { id: "wta174_kostovic", name: "Teodora Kostović", country: "🇷🇸", tour: "WTA", rank: 174 },
+  { id: "wta175_vandromme", name: "Jeline Vandromme", country: "🇧🇪", tour: "WTA", rank: 175 },
+  { id: "wta176_ponchet", name: "Jessika Ponchet", country: "🇫🇷", tour: "WTA", rank: 176 },
+  { id: "wta177_monnet", name: "Carole Monnet", country: "🇫🇷", tour: "WTA", rank: 177 },
+  { id: "wta178_mayexin", name: "Ma Yexin", country: "🇨🇳", tour: "WTA", rank: 178 },
+  { id: "wta179_urhobo", name: "Akasha Urhobo", country: "🇺🇸", tour: "WTA", rank: 179 },
+  { id: "wta180_begu", name: "Irina Begu", country: "🇷🇴", tour: "WTA", rank: 180 },
+  { id: "wta181_hibino", name: "Nao Hibino", country: "🇯🇵", tour: "WTA", rank: 181 },
+  { id: "wta182_barthel", name: "Mona Barthel", country: "🇩🇪", tour: "WTA", rank: 182 },
+  { id: "wta183_shymanovich", name: "Iryna Shymanovich", country: "🇧🇾", tour: "WTA", rank: 183 },
+  { id: "wta184_giovannini", name: "Luisina Giovannini", country: "🇦🇷", tour: "WTA", rank: 184 },
+  { id: "wta185_maristany", name: "Guiomar Maristany Zuleta de Reales", country: "🇪🇸", tour: "WTA", rank: 185 },
+  { id: "wta186_fita", name: "Ángela Fita Boluda", country: "🇪🇸", tour: "WTA", rank: 186 },
+  { id: "wta187_gjorcheska", name: "Lina Gjorčeska", country: "🇲🇰", tour: "WTA", rank: 187 },
+  { id: "wta188_rame", name: "Alice Ramé", country: "🇫🇷", tour: "WTA", rank: 188 },
+  { id: "wta189_osuigwe", name: "Whitney Osuigwe", country: "🇺🇸", tour: "WTA", rank: 189 },
+  { id: "wta190_you", name: "You Xiaodi", country: "🇨🇳", tour: "WTA", rank: 190 },
+  { id: "wta191_crawley", name: "Fiona Crawley", country: "🇺🇸", tour: "WTA", rank: 191 },
+  { id: "wta192_teichmann", name: "Jil Teichmann", country: "🇨🇭", tour: "WTA", rank: 192 },
+  { id: "wta193_ferro", name: "Fiona Ferro", country: "🇫🇷", tour: "WTA", rank: 193 },
+  { id: "wta194_cross", name: "Kayla Cross", country: "🇨🇦", tour: "WTA", rank: 194 },
+  { id: "wta195_hunter", name: "Storm Hunter", country: "🇦🇺", tour: "WTA", rank: 195 },
+  { id: "wta196_gasanova", name: "Anastasia Gasanova", country: "🇷🇺", tour: "WTA", rank: 196 },
+];
+
+const TOTAL = 400;
+const STORAGE_KEY = "tennis-tracker-v1";
+const SURFACE_COLORS = { "Hard": "#4A90D9", "Clay": "#C0622A", "Grass": "#3A8C4A", "Indoor": "#8A6DB5" };
+
+function App() {
+  const [sightings, setSightings] = useState({});
+  const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [activeTab, setActiveTab] = useState("players");
+  const fileRef = useRef();
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) setSightings(JSON.parse(stored));
+    } catch(e) {}
+  }, []);
+
+  const save = (next) => {
+    setSightings(next);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch(e) {}
+  };
+
+  const openEdit = (playerId) => {
+    const existing = sightings[playerId] || {};
+    setForm({
+      date: existing.date || new Date().toISOString().slice(0, 10),
+      location: existing.location || "",
+      tournament: existing.tournament || "",
+      surface: existing.surface || "Hard",
+      notes: existing.notes || "",
+      image: existing.image || null,
+    });
+    setModal({ playerId, mode: "edit" });
+  };
+
+  const openView = (playerId) => {
+    if (sightings[playerId]?.seen) setModal({ playerId, mode: "view" });
+    else openEdit(playerId);
+  };
+
+  const handleSave = () => {
+    save({ ...sightings, [modal.playerId]: { ...form, seen: true } });
+    setModal(null);
+  };
+
+  const handleUnsee = (playerId) => {
+    const next = { ...sightings };
+    delete next[playerId];
+    save(next);
+    setModal(null);
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm(f => ({ ...f, image: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const filtered = PLAYERS.filter(p => {
+    if (filter !== "All" && p.tour !== filter) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const seenCount = Object.values(sightings).filter(s => s.seen).length;
+  const seenPlayers = PLAYERS.filter(p => sightings[p.id]?.seen);
+  const player = modal ? PLAYERS.find(p => p.id === modal.playerId) : null;
+
+  return (
+    <div style={{ background: "#0D1B2A", minHeight: "100vh" }}>
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #0D1B2A 0%, #1A2D42 100%)", borderBottom: "2px solid #C8A84B", padding: "20px 20px 0" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 14, marginBottom: 4 }}>
+          <div style={{ fontSize: 34, lineHeight: 1 }}>🎾</div>
+          <div>
+            <div style={{ fontSize: 10, letterSpacing: 4, color: "#C8A84B", textTransform: "uppercase", marginBottom: 2 }}>Live Sighting Tracker</div>
+            <h1 style={{ margin: 0, fontSize: 22, fontFamily: "Georgia, serif", color: "#FFF", fontWeight: "bold" }}>Tennis Player Tracker</h1>
+          </div>
+          <div style={{ marginLeft: "auto", textAlign: "right" }}>
+            <div style={{ fontSize: 30, fontFamily: "Georgia, serif", color: "#C8A84B", fontWeight: "bold", lineHeight: 1 }}>{seenCount}</div>
+            <div style={{ fontSize: 9, color: "#8A9BB0", letterSpacing: 2, textTransform: "uppercase" }}>von {PLAYERS.length} gesehen</div>
+          </div>
+        </div>
+        {/* Progress */}
+        <div style={{ height: 3, background: "#1E3050", margin: "12px 0 0", borderRadius: 2 }}>
+          <div style={{ height: 3, background: "linear-gradient(90deg, #C8A84B, #E8C96A)", width: `${(seenCount / PLAYERS.length) * 100}%`, borderRadius: 2, transition: "width 0.4s" }} />
+        </div>
+        {/* Tabs */}
+        <div style={{ display: "flex", marginTop: 14 }}>
+          {[["players","Alle Spieler"], ["log",`Gesehen (${seenCount})`]].map(([tab, label]) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "none", border: "none", padding: "10px 18px", cursor: "pointer", fontSize: 13, color: activeTab === tab ? "#C8A84B" : "#6A8099", borderBottom: activeTab === tab ? "2px solid #C8A84B" : "2px solid transparent", fontWeight: activeTab === tab ? "bold" : "normal" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "18px 16px", maxWidth: 680, margin: "0 auto" }}>
+        {activeTab === "players" && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Spieler suchen…" style={{ flex: 1, minWidth: 130, background: "#142030", border: "1px solid #2A4060", borderRadius: 8, padding: "8px 12px", color: "#E8E0CC", fontSize: 13, outline: "none" }} />
+              {["All","ATP","WTA"].map(f => (
+                <button key={f} onClick={() => setFilter(f)} style={{ background: filter === f ? "#C8A84B" : "#142030", border: "1px solid " + (filter === f ? "#C8A84B" : "#2A4060"), borderRadius: 8, padding: "8px 16px", color: filter === f ? "#0D1B2A" : "#8A9BB0", cursor: "pointer", fontSize: 12, fontWeight: filter === f ? "bold" : "normal" }}>
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {filtered.map(p => {
+                const seen = sightings[p.id]?.seen;
+                const s = sightings[p.id];
+                return (
+                  <div key={p.id} onClick={() => openView(p.id)} style={{ display: "flex", alignItems: "center", gap: 10, background: seen ? "linear-gradient(135deg,#142A1E,#1A3528)" : "#142030", border: "1px solid " + (seen ? "#2A6040" : "#1E3050"), borderRadius: 10, padding: "11px 14px", cursor: "pointer", position: "relative", overflow: "hidden" }}>
+                    {seen && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: "#4CAF7D", borderRadius: "10px 0 0 10px" }} />}
+                    <div style={{ width: 26, textAlign: "right", fontSize: 11, color: "#3A5570", fontFamily: "monospace", flexShrink: 0 }}>{p.rank}</div>
+                    <div style={{ fontSize: 18 }}>{p.country}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: seen ? "#90D4A8" : "#D0C8B8" }}>{p.name}</div>
+                      {seen && s?.location && <div style={{ fontSize: 11, color: "#5A8A6A", marginTop: 1 }}>📍 {s.location}{s.tournament ? ` · ${s.tournament}` : ""}{s.date ? ` · ${s.date}` : ""}</div>}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 9, letterSpacing: 1, color: "#4A6080", background: "#0D1B2A", padding: "3px 6px", borderRadius: 4 }}>{p.tour}</span>
+                      {seen
+                        ? <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#4CAF7D", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff" }}>✓</div>
+                        : <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px dashed #2A4060" }} />}
+                    </div>
+                  </div>
+                );
+              })}
+              {filtered.length === 0 && <div style={{ textAlign: "center", color: "#4A6080", padding: 32, fontSize: 14 }}>Kein Spieler gefunden.</div>}
+            </div>
+          </>
+        )}
+
+        {activeTab === "log" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {seenPlayers.length === 0 && (
+              <div style={{ textAlign: "center", color: "#4A6080", padding: 48, fontSize: 14 }}>
+                Noch keine Spieler gesehen.<br />
+                <span style={{ fontSize: 12, marginTop: 6, display: "block" }}>Tippe auf einen Spieler, um dein erstes Sighting einzutragen.</span>
+              </div>
+            )}
+            {seenPlayers.map(p => {
+              const s = sightings[p.id];
+              const surf = s?.surface || "Hard";
+              return (
+                <div key={p.id} onClick={() => openView(p.id)} style={{ background: "#142030", border: "1px solid #1E3050", borderRadius: 12, overflow: "hidden", cursor: "pointer" }}>
+                  {s.image && <img src={s.image} alt="" style={{ width: "100%", height: 150, objectFit: "cover" }} />}
+                  <div style={{ padding: "12px 14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: "bold", color: "#E8E0CC" }}>{p.country} {p.name}</div>
+                        {s.tournament && <div style={{ fontSize: 12, color: "#C8A84B", marginTop: 2 }}>{s.tournament}</div>}
+                      </div>
+                      <span style={{ fontSize: 10, padding: "3px 9px", borderRadius: 6, background: SURFACE_COLORS[surf]+"33", color: SURFACE_COLORS[surf], border: "1px solid "+SURFACE_COLORS[surf]+"66", whiteSpace: "nowrap" }}>{surf}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, color: "#6A8099" }}>
+                      {s.date && <span>📅 {s.date}</span>}
+                      {s.location && <span>📍 {s.location}</span>}
+                    </div>
+                    {s.notes && <div style={{ marginTop: 8, fontSize: 12, color: "#8A9BB0", background: "#0D1B2A", borderRadius: 6, padding: "7px 10px", fontStyle: "italic" }}>"{s.notes}"</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
+      {modal && player && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(5,12,22,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
+          <div style={{ background: "#0F2035", border: "1px solid #2A4060", borderRadius: 16, width: "100%", maxWidth: 420, maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid #1A3050" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 10, color: "#C8A84B", letterSpacing: 3, textTransform: "uppercase", marginBottom: 3 }}>{player.tour} #{player.rank} · {player.country}</div>
+                  <div style={{ fontSize: 19, fontWeight: "bold", fontFamily: "Georgia, serif", color: "#FFF" }}>{player.name}</div>
+                </div>
+                <button onClick={() => setModal(null)} style={{ background: "#1A3050", border: "none", borderRadius: "50%", width: 30, height: 30, color: "#8A9BB0", cursor: "pointer", fontSize: 15 }}>✕</button>
+              </div>
+            </div>
+
+            {modal.mode === "view" ? (
+              <div style={{ padding: 18 }}>
+                {sightings[modal.playerId]?.image && <img src={sightings[modal.playerId].image} alt="" style={{ width: "100%", borderRadius: 10, marginBottom: 14, maxHeight: 200, objectFit: "cover" }} />}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+                  {[["📅 Datum", sightings[modal.playerId]?.date], ["📍 Ort", sightings[modal.playerId]?.location], ["🏆 Turnier", sightings[modal.playerId]?.tournament], ["🟫 Belag", sightings[modal.playerId]?.surface]].map(([label, val]) => val && (
+                    <div key={label} style={{ background: "#142030", borderRadius: 8, padding: "9px 11px" }}>
+                      <div style={{ fontSize: 10, color: "#4A6080", marginBottom: 3 }}>{label}</div>
+                      <div style={{ fontSize: 13, color: "#D0C8B8" }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+                {sightings[modal.playerId]?.notes && (
+                  <div style={{ background: "#142030", borderRadius: 8, padding: "11px 12px", marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "#4A6080", marginBottom: 5 }}>📝 NOTIZEN</div>
+                    <div style={{ fontSize: 13, color: "#D0C8B8", fontStyle: "italic" }}>{sightings[modal.playerId].notes}</div>
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => setModal({ ...modal, mode: "edit" })} style={{ flex: 1, background: "#C8A84B", border: "none", borderRadius: 10, padding: "11px", color: "#0D1B2A", fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>Bearbeiten</button>
+                  <button onClick={() => handleUnsee(modal.playerId)} style={{ background: "#2A1A1A", border: "1px solid #4A2A2A", borderRadius: 10, padding: "11px 14px", color: "#C06060", cursor: "pointer", fontSize: 13 }}>Entfernen</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: 18 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Datum</label>
+                    <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} style={{ width: "100%", background: "#142030", border: "1px solid #2A4060", borderRadius: 8, padding: "9px 11px", color: "#E8E0CC", fontSize: 13, outline: "none" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Ort / Stadt</label>
+                    <input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="z.B. Wien, Roland Garros…" style={{ width: "100%", background: "#142030", border: "1px solid #2A4060", borderRadius: 8, padding: "9px 11px", color: "#E8E0CC", fontSize: 13, outline: "none" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Turnier</label>
+                    <input value={form.tournament} onChange={e => setForm(f => ({ ...f, tournament: e.target.value }))} placeholder="z.B. Wimbledon, US Open…" style={{ width: "100%", background: "#142030", border: "1px solid #2A4060", borderRadius: 8, padding: "9px 11px", color: "#E8E0CC", fontSize: 13, outline: "none" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Belag</label>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {Object.entries(SURFACE_COLORS).map(([surf, col]) => (
+                        <button key={surf} onClick={() => setForm(f => ({ ...f, surface: surf }))} style={{ flex: 1, background: form.surface === surf ? col : "#142030", border: "1px solid "+col, borderRadius: 8, padding: "7px 2px", color: form.surface === surf ? "#fff" : col, cursor: "pointer", fontSize: 10, fontWeight: form.surface === surf ? "bold" : "normal" }}>{surf}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Notizen</label>
+                    <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Wie war das Match? Besonderes erlebt?" rows={3} style={{ width: "100%", background: "#142030", border: "1px solid #2A4060", borderRadius: 8, padding: "9px 11px", color: "#E8E0CC", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, color: "#4A6080", letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Foto</label>
+                    {form.image ? (
+                      <div style={{ position: "relative" }}>
+                        <img src={form.image} alt="" style={{ width: "100%", borderRadius: 8, maxHeight: 150, objectFit: "cover" }} />
+                        <button onClick={() => setForm(f => ({ ...f, image: null }))} style={{ position: "absolute", top: 8, right: 8, background: "rgba(13,27,42,0.85)", border: "none", borderRadius: "50%", width: 26, height: 26, color: "#E8E0CC", cursor: "pointer", fontSize: 13 }}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => fileRef.current.click()} style={{ width: "100%", background: "#142030", border: "2px dashed #2A4060", borderRadius: 8, padding: "18px", color: "#4A6080", cursor: "pointer", fontSize: 13 }}>📷 Foto hochladen</button>
+                    )}
+                    <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: "none" }} />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+                  <button onClick={() => setModal(null)} style={{ flex: 1, background: "none", border: "1px solid #2A4060", borderRadius: 10, padding: "11px", color: "#6A8099", cursor: "pointer", fontSize: 13 }}>Abbrechen</button>
+                  <button onClick={handleSave} style={{ flex: 2, background: "linear-gradient(135deg,#C8A84B,#E8C96A)", border: "none", borderRadius: 10, padding: "11px", color: "#0D1B2A", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>✓ Als gesehen speichern</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
